@@ -1,0 +1,34 @@
+{
+  "jobs": [
+    {
+      "id": 1,
+      "title": "Développeur Full Stack",
+      "description": "Recherche d'un développeur full stack expérimenté pour rejoindre notre équipe dynamique. Vous travaillerez sur des projets innovants utilisant les dernières technologies.",
+      "salary": 5000,
+      "createdAt": "2024-01-15",
+      "yearsOfExperience": 3,
+      "location": "Paris",
+      "company": "TechCorp"
+    },
+    {
+      "id": 2,
+      "title": "Designer UX/UI",
+      "description": "Nous cherchons un designer créatif pour améliorer l'expérience utilisateur de nos applications. Vous serez responsable de la conception d'interfaces modernes et intuitives.",
+      "salary": 4000,
+      "createdAt": "2025-01-20",
+      "yearsOfExperience": 2,
+      "location": "Lyon",
+      "company": "DesignStudio"
+    },
+    {
+      "title": ".NET Developper",
+      "description": "Langages et frameworks : Maîtrise de C#, ASP.NET et .NET Core (ou .NET 6+).\nConcepts de développement : Programmation orientée objet (POO), API REST, architecture MVC.\nOutils de développement : Utilisation d'outils et de plateformes .NET.\nCompétences relationnelles : Capacité à travailler en équipe, à communiquer et à collaborer avec d'autres équipes (produit, design).\nCuriosité : Être à jour sur les évolutions technologiques et être capable de trouver des solutions aux problèmes",
+      "salary": 1250,
+      "yearsOfExperience": 1,
+      "company": "Nimblways",
+      "location": "Casablanca,Morocco",
+      "createdAt": "2025-11-16",
+      "id": 4
+    }
+  ]
+}

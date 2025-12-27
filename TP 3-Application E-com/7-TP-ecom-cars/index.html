@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<title>Les Bonnes Pièces</title>
+		<link rel="stylesheet" href="styles.css">
+		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			<header>
+				<img src="images/logo-les-bonnes-pieces.png" alt="LOGO">
+				<h1>Les Bonnes Pièces</h1>
+				<div class="panier-info">
+					<span class="panier-badge" v-if="panier.length > 0">{{ panier.length }}</span>
+					<button class="btn-panier" @click="afficherPanier = !afficherPanier">
+						🛒 Panier
+					</button>
+				</div>
+			</header>
+			<main>
+				<!-- Menu de recherche et filtres -->
+				<section class="filtres">
+					<h3>Filtres</h3>
+					
+					<!-- Barre de recherche -->
+					<div class="filtre-item">
+						<label for="recherche">Recherche :</label>
+						<input 
+							type="text" 
+							id="recherche" 
+							v-model="recherche" 
+							placeholder="Rechercher une pièce..."
+							class="input-recherche"
+						>
+					</div>
+
+					<!-- Filtre par catégorie -->
+					<div class="filtre-item">
+						<label for="categorie">Catégorie :</label>
+						<select id="categorie" v-model="categorieFiltre" class="select-filtre">
+							<option value="">Toutes les catégories</option>
+							<option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+						</select>
+					</div>
+
+					<!-- Filtre par disponibilité -->
+					<div class="filtre-item">
+						<label for="disponibilite">Disponibilité :</label>
+						<select id="disponibilite" v-model="disponibiliteFiltre" class="select-filtre">
+							<option value="">Tous</option>
+							<option value="true">En stock</option>
+							<option value="false">Rupture de stock</option>
+						</select>
+					</div>
+
+					<!-- Tri par prix -->
+					<div class="filtre-item">
+						<label for="tri">Trier par prix :</label>
+						<select id="tri" v-model="triPrix" class="select-filtre">
+							<option value="">Aucun tri</option>
+							<option value="croissant">Prix croissant</option>
+							<option value="decroissant">Prix décroissant</option>
+						</select>
+					</div>
+
+					<!-- Résumé des résultats -->
+					<div class="resultats-info">
+						<p>{{ piecesFiltrees.length }} pièce(s) trouvée(s)</p>
+					</div>
+				</section>
+
+				<!-- Fiches produits -->
+				<section class="fiches">
+					<div v-if="piecesFiltrees.length === 0" class="aucun-resultat">
+						<p>Aucune pièce ne correspond à vos critères de recherche.</p>
+					</div>
+					<div v-else class="grille-produits">
+						<article 
+							v-for="piece in piecesFiltrees" 
+							:key="piece.id" 
+							class="fiche-produit"
+							:class="{ 'rupture-stock': !piece.disponible }"
+						>
+							<div class="image-container">
+								<img 
+									:src="piece.image" 
+									:alt="piece.nom"
+									@error="handleImageError($event, piece)"
+									class="image-produit"
+								>
+								<span v-if="!piece.disponible" class="badge-rupture">Rupture de stock</span>
+							</div>
+							<div class="info-produit">
+								<h3>{{ piece.nom }}</h3>
+								<p class="categorie">{{ piece.categorie }}</p>
+								<p class="prix">{{ piece.prix }} €</p>
+								<button 
+									@click="ajouterAuPanier(piece)" 
+									:disabled="!piece.disponible"
+									class="btn-ajouter"
+									:class="{ 'disabled': !piece.disponible }"
+								>
+									{{ piece.disponible ? 'Ajouter au panier' : 'Indisponible' }}
+								</button>
+							</div>
+						</article>
+					</div>
+				</section>
+			</main>
+
+			<!-- Panier -->
+			<div v-if="afficherPanier" class="panier-modal" @click.self="afficherPanier = false">
+				<div class="panier-contenu">
+					<div class="panier-header">
+						<h2>Panier ({{ panier.length }})</h2>
+						<button @click="afficherPanier = false" class="btn-fermer">×</button>
+					</div>
+					<div v-if="panier.length === 0" class="panier-vide">
+						<p>Votre panier est vide</p>
+					</div>
+					<div v-else class="panier-items">
+						<div v-for="(item, index) in panier" :key="index" class="panier-item">
+							<img :src="item.image" :alt="item.nom" @error="handleImageError($event, item)" class="panier-image">
+							<div class="panier-info-item">
+								<h4>{{ item.nom }}</h4>
+								<p>{{ item.prix }} €</p>
+							</div>
+							<button @click="retirerDuPanier(index)" class="btn-retirer">Retirer</button>
+						</div>
+						<div class="panier-total">
+							<strong>Total : {{ totalPanier }} €</strong>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			const { createApp } = Vue;
+
+			createApp({
+				data() {
+					return {
+						pieces: [],
+						recherche: '',
+						categorieFiltre: '',
+						disponibiliteFiltre: '',
+						triPrix: '',
+						panier: [],
+						afficherPanier: false
+					}
+				},
+				computed: {
+					// Liste des catégories uniques
+					categories() {
+						const cats = [...new Set(this.pieces.map(p => p.categorie))];
+						return cats.sort();
+					},
+					// Pièces filtrées et triées
+					piecesFiltrees() {
+						let resultat = this.pieces;
+
+						// Filtrage par recherche (nom)
+						if (this.recherche) {
+							const rechercheLower = this.recherche.toLowerCase();
+							resultat = resultat.filter(piece => 
+								piece.nom.toLowerCase().includes(rechercheLower)
+							);
+						}
+
+						// Filtrage par catégorie
+						if (this.categorieFiltre) {
+							resultat = resultat.filter(piece => 
+								piece.categorie === this.categorieFiltre
+							);
+						}
+
+						// Filtrage par disponibilité
+						if (this.disponibiliteFiltre !== '') {
+							const disponible = this.disponibiliteFiltre === 'true';
+							resultat = resultat.filter(piece => 
+								piece.disponible === disponible
+							);
+						}
+
+						// Tri par prix
+						if (this.triPrix === 'croissant') {
+							resultat = [...resultat].sort((a, b) => a.prix - b.prix);
+						} else if (this.triPrix === 'decroissant') {
+							resultat = [...resultat].sort((a, b) => b.prix - a.prix);
+						}
+
+						return resultat;
+					},
+					// Total du panier
+					totalPanier() {
+						return this.panier.reduce((total, item) => total + item.prix, 0);
+					}
+				},
+				methods: {
+					// Charger les données depuis le JSON
+					async chargerPieces() {
+						try {
+							const response = await fetch('pieces-autos.json');
+							this.pieces = await response.json();
+						} catch (error) {
+							console.error('Erreur lors du chargement des pièces:', error);
+						}
+					},
+					// Ajouter une pièce au panier
+					ajouterAuPanier(piece) {
+						if (piece.disponible) {
+							this.panier.push({ ...piece });
+						}
+					},
+					// Retirer une pièce du panier
+					retirerDuPanier(index) {
+						this.panier.splice(index, 1);
+					},
+					// Gérer les erreurs d'image
+					handleImageError(event, piece) {
+						// Si l'image ne charge pas, utiliser un placeholder avec le nom du produit
+						if (!event.target.src.includes('placeholder')) {
+							event.target.src = 'https://via.placeholder.com/400x300/cccccc/666666?text=' + encodeURIComponent(piece.nom);
+						}
+					}
+				},
+				mounted() {
+					this.chargerPieces();
+				}
+			}).mount('#app');
+		</script>
+	</body>
+</html>

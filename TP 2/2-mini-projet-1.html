@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projet 1-38 - Liste des Personnes</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        fieldset {
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        legend {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input[type="text"] {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        input[type="checkbox"], select {
+            margin-right: 15px;
+            margin-left: 5px;
+        }
+        
+        .personne {
+            clear: left;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+            transition: all 0.3s ease;
+        }
+        
+        .personne:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .personne img {
+            float: left;
+            margin-right: 20px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .personne-info {
+            margin-left: 20px;
+        }
+        
+        .nom {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .pays {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .contact-info {
+            background-color: #e8f4f8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .contact-info.hidden {
+            display: none;
+        }
+        
+        .contact-toggle {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .contact-toggle:hover {
+            background-color: #0056b3;
+        }
+        
+        .misEnForme {
+            background: linear-gradient(135deg, #e0ffff, #b0e0e6) !important;
+            font-family: Georgia, serif !important;
+            font-size: 1.2rem !important;
+            margin: 1rem !important;
+            border: 2px solid #87ceeb !important;
+        }
+        
+        .misEnForme .nom {
+            color: #2c5aa0 !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .misEnForme .pays {
+            color: #4a5568 !important;
+            font-style: italic;
+        }
+        
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Liste des Personnes</h1>
+        
+        <div id="app">
+            <fieldset>
+                <legend>Filtre sur le nom</legend>
+                <input type="text" v-model="filtreNom" placeholder="Rechercher par nom...">
+            </fieldset>
+            
+            <fieldset>
+                <legend>Options d'affichage</legend>
+                <div class="options-container">
+                    <div class="option-group">
+                        <label>Homme</label>
+                        <input type="checkbox" v-model="homme">
+                    </div>
+                    <div class="option-group">
+                        <label>Femme</label>
+                        <input type="checkbox" v-model="femme">
+                    </div>
+                    <div class="option-group">
+                        <label>Téléphone</label>
+                        <input type="checkbox" v-model="afficherTel">
+                    </div>
+                    <div class="option-group">
+                        <label>Email</label>
+                        <input type="checkbox" v-model="afficherEmail">
+                    </div>
+                    <div class="option-group">
+                        <label>Taille photo</label>
+                        <select v-model="taille">
+                            <option value="1">Petit</option>
+                            <option value="2">Moyen</option>
+                            <option value="3">Grand</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label>Mise en forme</label>
+                        <input type="checkbox" v-model="mef">
+                    </div>
+                </div>
+            </fieldset>
+            
+            <div v-if="personnesFiltrees.length === 0" class="no-results">
+                Aucune personne trouvée avec ces critères de recherche.
+            </div>
+            
+            <div v-for="p in personnesFiltrees" :key="p.login.uuid" 
+                 class="personne" 
+                 :class="{ misEnForme: mef }">
+                <img :src="getImageSrc(p)" :alt="p.name.first + ' ' + p.name.last">
+                
+                <div class="personne-info">
+                    <div class="nom">{{ p.name.title }} {{ p.name.first }} {{ p.name.last }}</div>
+                    <div class="pays">📍 {{ p.location.country }}</div>
+                    
+                    <div class="contact-info" :class="{ hidden: !afficherContact }">
+                        <div v-if="afficherTel && p.phone">
+                            <strong>Téléphone:</strong> {{ p.phone }}
+                        </div>
+                        <div v-if="afficherEmail && p.email">
+                            <strong>Email:</strong> {{ p.email }}
+                        </div>
+                    </div>
+                    
+                    <button class="contact-toggle" @click="toggleContact">
+                        {{ afficherContact ? 'Masquer' : 'Afficher' }} les informations de contact
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    homme: true,
+                    femme: true,
+                    afficherTel: true,
+                    afficherEmail: true,
+                    afficherContact: false, // Par défaut, les contacts sont cachés
+                    mef: false,
+                    taille: 2,
+                    filtreNom: '',
+                    personnes: [
+                        {
+                            "gender": "female",
+                            "name": {
+                                "title": "Mrs",
+                                "first": "Elizabeth",
+                                "last": "Ambrose"
+                            },
+                            "location": {
+                                "country": "Canada"
+                            },
+                            "email": "elizabeth.ambrose@example.com",
+                            "phone": "366-033-8063",
+                            "login": {
+                                "uuid": "50777e60-394d-4951-b933-a2f78599065d"
+                            },
+                            "picture": {
+                                "large": "https://randomuser.me/api/portraits/women/49.jpg",
+                                "medium": "https://randomuser.me/api/portraits/med/women/49.jpg",
+                                "thumbnail": "https://randomuser.me/api/portraits/thumb/women/49.jpg"
+                            }
+                        },
+                        {
+                            "gender": "male",
+                            "name": {
+                                "title": "Mr",
+                                "first": "Batista",
+                                "last": "Silveira"
+                            },
+                            "location": {
+                                "country": "Brazil"
+                            },
+                            "email": "batista.silveira@example.com",
+                            "phone": "(53) 5553-2892",
+                            "login": {
+                                "uuid": "5308f02b-7838-4b48-8114-2fe1349c0819"
+                            },
+                            "picture": {
+                                "large": "https://randomuser.me/api/portraits/men/50.jpg",
+                                "medium": "https://randomuser.me/api/portraits/med/men/50.jpg",
+                                "thumbnail": "https://randomuser.me/api/portraits/thumb/men/50.jpg"
+                            }
+                        },
+                        {
+                            "gender": "male",
+                            "name": {
+                                "title": "Mr",
+                                "first": "Blaise",
+                                "last": "Adam"
+                            },
+                            "location": {
+                                "country": "Switzerland"
+                            },
+                            "email": "blaise.adam@example.com",
+                            "phone": "079 493 00 77",
+                            "login": {
+                                "uuid": "3f7d9b90-8858-4986-bdf3-075df560ce31"
+                            },
+                            "picture": {
+                                "large": "https://randomuser.me/api/portraits/men/29.jpg",
+                                "medium": "https://randomuser.me/api/portraits/med/men/29.jpg",
+                                "thumbnail": "https://randomuser.me/api/portraits/thumb/men/29.jpg"
+                            }
+                        }
+                    ]
+                }
+            },
+            computed: {
+                personnesFiltrees() {
+                    return this.personnes.filter(p => {
+                        // Filtre par genre
+                        const genreMatch = (this.homme && p.name.title === 'Mr') || 
+                                         (this.femme && p.name.title === 'Mrs');
+                        
+                        // Filtre par nom
+                        const nomMatch = p.name.last.toLowerCase().includes(this.filtreNom.toLowerCase()) ||
+                                       p.name.first.toLowerCase().includes(this.filtreNom.toLowerCase()) ||
+                                       this.filtreNom === '';
+                        
+                        return genreMatch && nomMatch;
+                    });
+                }
+            },
+            methods: {
+                getImageSrc(personne) {
+                    switch(this.taille) {
+                        case 1:
+                            return personne.picture.thumbnail;
+                        case 2:
+                            return personne.picture.medium;
+                        case 3:
+                            return personne.picture.large;
+                        default:
+                            return personne.picture.medium;
+                    }
+                },
+                toggleContact() {
+                    this.afficherContact = !this.afficherContact;
+                }
+            },
+            mounted() {
+                console.log('Vue app montée avec', this.personnes.length, 'personnes');
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

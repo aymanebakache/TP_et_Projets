@@ -1,0 +1,21 @@
+{
+  "name": "jobs-app",
+  "version": "1.0.0",
+  "description": "Application de gestion des emplois",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "json-server": "json-server --watch db.json --port 3000"
+  },
+  "dependencies": {
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.4.0",
+    "json-server": "^0.17.4",
+    "vite": "^4.5.0"
+  }
+}
+
